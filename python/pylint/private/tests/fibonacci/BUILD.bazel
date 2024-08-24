@@ -1,0 +1,39 @@
+load("@rules_venv//python:defs.bzl", "py_library", "py_test")
+load("//python/pylint:defs.bzl", "py_pylint_test")
+
+[
+    py_library(
+        name = name,
+        srcs = [
+            "__init__.py",
+            "fibonacci.py",
+        ],
+        visibility = ["//python/pylint/private/tests:__subpackages__"],
+    )
+    for name in [
+        "fibonacci",
+        # These targets are used to test pylint aspects running on targets
+        # with slashes in the name.
+        "fibonacci/subdir",
+        "fibonacci/subdir1/subdir2",
+    ]
+]
+
+py_pylint_test(
+    name = "py_library_lint",
+    target = ":fibonacci",
+)
+
+py_test(
+    name = "fibonacci_test",
+    srcs = ["fibonacci_test.py"],
+    imports = ["."],
+    deps = [
+        ":fibonacci",
+    ],
+)
+
+py_pylint_test(
+    name = "fibonacci_test_pylint_test",
+    target = ":fibonacci_test",
+)
