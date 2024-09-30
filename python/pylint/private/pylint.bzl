@@ -148,13 +148,15 @@ py_pylint_test = rule(
 )
 
 def _py_pylint_aspect_impl(target, ctx):
-    for ignore_tag in [
-        "no-pylint",
-        "no-lint",
+    ignore_tags = [
+        "no_pylint",
         "no_lint",
         "nolint",
-    ]:
-        if ignore_tag in ctx.rule.attr.tags:
+        "nopylint",
+    ]
+    for tag in ctx.rule.attr.tags:
+        sanitized = tag.replace("-", "_").lower()
+        if sanitized in ignore_tags:
             return []
 
     srcs = _find_srcs(target, ctx)
@@ -196,6 +198,7 @@ def _py_pylint_aspect_impl(target, ctx):
 
     ctx.actions.run(
         mnemonic = "Pylint",
+        progress_message = "Pylint %{label}",
         executable = executable,
         inputs = depset([ctx.file._config], transitive = [srcs]),
         tools = runfiles.files,
