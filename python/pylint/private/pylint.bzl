@@ -198,6 +198,7 @@ def _py_pylint_aspect_impl(target, ctx):
 
     ctx.actions.run(
         mnemonic = "Pylint",
+        progress_message = "Pylint %{label}",
         executable = executable,
         inputs = depset([ctx.file._config], transitive = [srcs]),
         tools = runfiles.files,
