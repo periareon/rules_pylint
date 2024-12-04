@@ -21,7 +21,7 @@ def _no_realpath(path, **_kwargs):  # type: ignore
 
 @contextlib.contextmanager
 def determinisim_patch() -> Generator[None, None, None]:
-    """A context manager for applying determinisitc behavior to the python stdlib."""
+    """A context manager for applying deterministic behavior to the python stdlib."""
 
     # Avoid sandbox escapes
     old_realpath = os.path.realpath
@@ -111,6 +111,33 @@ def _load_args() -> Sequence[str]:
     return sys.argv[1:]
 
 
+def _report_logs(log_dir: Path) -> None:
+    """Print additional logs such as pytest crash logs to stderr."""
+    logs = []
+    for entry in log_dir.iterdir():
+        if not entry.is_file():
+            continue
+
+        if not entry.name.startswith("pylint-crash"):
+            continue
+
+        logs.append(entry)
+
+    if not logs:
+        return
+
+    delimiter = "-" * 80
+    print(delimiter, file=sys.stdout)
+    print("rules_pylint: Reporting additional log files", file=sys.stdout)
+    print(delimiter, file=sys.stdout)
+    for entry in logs:
+        print(delimiter, file=sys.stdout)
+        print(f"Log file: {entry}", file=sys.stdout)
+        print(delimiter, file=sys.stdout)
+        print(entry.read_text(encoding="utf-8"), file=sys.stdout)
+        print(delimiter, file=sys.stdout)
+
+
 def main() -> None:
     """The main entrypoint."""
     args = parse_args(_load_args())
@@ -147,6 +174,8 @@ def main() -> None:
             exit_code = exc.code
 
     finally:
+        _report_logs(Path(tmp_dir))
+
         if args.marker:
             sys.stderr = old_stderr
             sys.stdout = old_stdout
